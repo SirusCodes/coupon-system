@@ -128,8 +128,6 @@ func (s *CouponService) ValidateCoupon(ctx context.Context, req *models.Validate
 		return nil, fmt.Errorf("error updating coupon usage: %w", err)
 	}
 
-	s.cache.Delete(req.CouponCode)
-
 	return &models.ValidateCouponResponse{IsValid: true, Discount: discountDetails, Message: "Coupon applied successfully"}, nil
 }
 
@@ -186,6 +184,9 @@ func (s *CouponService) GetApplicableCoupons(ctx context.Context, req *models.Ap
 			}
 		}
 		applicableCoupons = append(applicableCoupons, models.ApplicableCoupon{CouponCode: coupon.CouponCode, DiscountValue: coupon.DiscountValue, DiscountType: coupon.DiscountType})
+
+		// Cache the coupon
+		s.cache.Set(coupon.CouponCode, &coupon)
 	}
 	return &models.ApplicableCouponsResponse{ApplicableCoupons: applicableCoupons}, nil
 }

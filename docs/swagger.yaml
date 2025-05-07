@@ -1,0 +1,270 @@
+definitions:
+  models.ApplicableCoupon:
+    properties:
+      coupon_code:
+        description: CouponCode is the code of the coupon
+        type: string
+      discount_type:
+        description: DiscountType is the type of discount (percentage or fixed_amount)
+        type: string
+      discount_value:
+        description: DiscountValue is the discount value for this coupon
+        type: number
+    type: object
+  models.ApplicableCouponsRequest:
+    description: ApplicableCouponsRequest represents the request to find applicable
+      coupons for a cart
+    properties:
+      cart_items:
+        description: CartItems is the list of items in the cart
+        items:
+          $ref: '#/definitions/models.CartItem'
+        type: array
+      order_total:
+        description: OrderTotal is the total value of the order
+        type: number
+      timestamp:
+        description: Timestamp is the current timestamp
+        type: string
+      user_id:
+        description: UserID is the ID of the user making the request
+        type: string
+    required:
+    - cart_items
+    - order_total
+    - timestamp
+    - user_id
+    type: object
+  models.ApplicableCouponsResponse:
+    properties:
+      applicable_coupons:
+        items:
+          $ref: '#/definitions/models.ApplicableCoupon'
+        type: array
+    type: object
+  models.CartItem:
+    properties:
+      category:
+        type: string
+      id:
+        type: string
+      price:
+        description: Price per unit
+        type: number
+      quantity:
+        description: Quantity of this item in the cart
+        type: integer
+    type: object
+  models.CreateCouponRequest:
+    description: CreateCouponRequest represents the request to create a new coupon
+    properties:
+      applicable_categories:
+        description: ApplicableCategories is a list of categories to which the coupon
+          applies
+        items:
+          type: string
+        type: array
+      applicable_medicine_ids:
+        description: ApplicableMedicineIDs is a list of medicine IDs to which the
+          coupon applies
+        items:
+          type: string
+        type: array
+      coupon_code:
+        description: CouponCode is the unique identifier for the coupon
+        type: string
+      discount_type:
+        description: DiscountType is the type of discount (percentage or fixed_amount)
+        enum:
+        - percentage
+        - fixed_amount
+        type: string
+      discount_value:
+        description: DiscountValue is the value of the discount
+        type: number
+      expiry_date:
+        description: ExpiryDate is the date when the coupon will expire
+        type: string
+      max_total_usage:
+        description: MaxTotalUsage is the maximum number of times the coupon can be
+          used in total
+        type: integer
+      max_usage_per_user:
+        description: MaxUsagePerUser is the maximum number of times a user can use
+          the coupon
+        type: integer
+      min_order_value:
+        description: MinOrderValue is the minimum order value required to apply the
+          coupon
+        type: number
+      terms_and_conditions:
+        description: TermsAndConditions are the terms and conditions for the coupon
+        type: string
+      usage_type:
+        description: UsageType is the type of usage allowed for the coupon (one_time,
+          multi_use, time_based)
+        enum:
+        - one_time
+        - multi_use
+        - time_based
+        type: string
+      valid_time_window_end:
+        description: ValidTimeWindowEnd is the end of the time window during which
+          the coupon is valid
+        type: string
+      valid_time_window_start:
+        description: ValidTimeWindowStart is the start of the time window during which
+          the coupon is valid
+        type: string
+    required:
+    - coupon_code
+    - discount_type
+    - discount_value
+    - expiry_date
+    - usage_type
+    type: object
+  models.DiscountDetails:
+    properties:
+      charges_discount:
+        type: number
+      items_discount:
+        type: number
+      total_discount:
+        type: number
+    type: object
+  models.ErrorResponse:
+    properties:
+      details:
+        type: string
+      error:
+        type: string
+    type: object
+  models.SuccessResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  models.ValidateCouponRequest:
+    properties:
+      cart_items:
+        items:
+          $ref: '#/definitions/models.CartItem'
+        type: array
+      coupon_code:
+        type: string
+      order_total:
+        type: number
+      timestamp:
+        type: string
+      user_id:
+        type: string
+    required:
+    - cart_items
+    - coupon_code
+    - order_total
+    - timestamp
+    - user_id
+    type: object
+  models.ValidateCouponResponse:
+    properties:
+      discount:
+        $ref: '#/definitions/models.DiscountDetails'
+      is_valid:
+        type: boolean
+      message:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /admin/coupons:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new coupon with the provided details.
+      parameters:
+      - description: Coupon Data
+        in: body
+        name: coupon
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateCouponRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Coupon created successfully
+          schema:
+            $ref: '#/definitions/models.SuccessResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Create a new coupon
+      tags:
+      - coupons
+  /coupons/applicable:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of coupons applicable to the current cart.
+      parameters:
+      - description: Cart details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.ApplicableCouponsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of applicable coupons
+          schema:
+            $ref: '#/definitions/models.ApplicableCouponsResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Get applicable coupons
+      tags:
+      - coupons
+  /coupons/validate:
+    post:
+      consumes:
+      - application/json
+      description: Validates a coupon code against the provided cart details.
+      parameters:
+      - description: Validation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.ValidateCouponRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Coupon validation result
+          schema:
+            $ref: '#/definitions/models.ValidateCouponResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Validate a coupon
+      tags:
+      - coupons
+swagger: "2.0"

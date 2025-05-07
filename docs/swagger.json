@@ -1,0 +1,383 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/admin/coupons": {
+            "post": {
+                "description": "Creates a new coupon with the provided details.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "coupons"
+                ],
+                "summary": "Create a new coupon",
+                "parameters": [
+                    {
+                        "description": "Coupon Data",
+                        "name": "coupon",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateCouponRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Coupon created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/coupons/applicable": {
+            "get": {
+                "description": "Retrieves a list of coupons applicable to the current cart.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "coupons"
+                ],
+                "summary": "Get applicable coupons",
+                "parameters": [
+                    {
+                        "description": "Cart details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ApplicableCouponsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of applicable coupons",
+                        "schema": {
+                            "$ref": "#/definitions/models.ApplicableCouponsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/coupons/validate": {
+            "post": {
+                "description": "Validates a coupon code against the provided cart details.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "coupons"
+                ],
+                "summary": "Validate a coupon",
+                "parameters": [
+                    {
+                        "description": "Validation request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ValidateCouponRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Coupon validation result",
+                        "schema": {
+                            "$ref": "#/definitions/models.ValidateCouponResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "models.ApplicableCoupon": {
+            "type": "object",
+            "properties": {
+                "coupon_code": {
+                    "description": "CouponCode is the code of the coupon",
+                    "type": "string"
+                },
+                "discount_type": {
+                    "description": "DiscountType is the type of discount (percentage or fixed_amount)",
+                    "type": "string"
+                },
+                "discount_value": {
+                    "description": "DiscountValue is the discount value for this coupon",
+                    "type": "number"
+                }
+            }
+        },
+        "models.ApplicableCouponsRequest": {
+            "description": "ApplicableCouponsRequest represents the request to find applicable coupons for a cart",
+            "type": "object",
+            "required": [
+                "cart_items",
+                "order_total",
+                "timestamp",
+                "user_id"
+            ],
+            "properties": {
+                "cart_items": {
+                    "description": "CartItems is the list of items in the cart",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.CartItem"
+                    }
+                },
+                "order_total": {
+                    "description": "OrderTotal is the total value of the order",
+                    "type": "number"
+                },
+                "timestamp": {
+                    "description": "Timestamp is the current timestamp",
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "UserID is the ID of the user making the request",
+                    "type": "string"
+                }
+            }
+        },
+        "models.ApplicableCouponsResponse": {
+            "type": "object",
+            "properties": {
+                "applicable_coupons": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ApplicableCoupon"
+                    }
+                }
+            }
+        },
+        "models.CartItem": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "price": {
+                    "description": "Price per unit",
+                    "type": "number"
+                },
+                "quantity": {
+                    "description": "Quantity of this item in the cart",
+                    "type": "integer"
+                }
+            }
+        },
+        "models.CreateCouponRequest": {
+            "description": "CreateCouponRequest represents the request to create a new coupon",
+            "type": "object",
+            "required": [
+                "coupon_code",
+                "discount_type",
+                "discount_value",
+                "expiry_date",
+                "usage_type"
+            ],
+            "properties": {
+                "applicable_categories": {
+                    "description": "ApplicableCategories is a list of categories to which the coupon applies",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "applicable_medicine_ids": {
+                    "description": "ApplicableMedicineIDs is a list of medicine IDs to which the coupon applies",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "coupon_code": {
+                    "description": "CouponCode is the unique identifier for the coupon",
+                    "type": "string"
+                },
+                "discount_type": {
+                    "description": "DiscountType is the type of discount (percentage or fixed_amount)",
+                    "type": "string",
+                    "enum": [
+                        "percentage",
+                        "fixed_amount"
+                    ]
+                },
+                "discount_value": {
+                    "description": "DiscountValue is the value of the discount",
+                    "type": "number"
+                },
+                "expiry_date": {
+                    "description": "ExpiryDate is the date when the coupon will expire",
+                    "type": "string"
+                },
+                "max_total_usage": {
+                    "description": "MaxTotalUsage is the maximum number of times the coupon can be used in total",
+                    "type": "integer"
+                },
+                "max_usage_per_user": {
+                    "description": "MaxUsagePerUser is the maximum number of times a user can use the coupon",
+                    "type": "integer"
+                },
+                "min_order_value": {
+                    "description": "MinOrderValue is the minimum order value required to apply the coupon",
+                    "type": "number"
+                },
+                "terms_and_conditions": {
+                    "description": "TermsAndConditions are the terms and conditions for the coupon",
+                    "type": "string"
+                },
+                "usage_type": {
+                    "description": "UsageType is the type of usage allowed for the coupon (one_time, multi_use, time_based)",
+                    "type": "string",
+                    "enum": [
+                        "one_time",
+                        "multi_use",
+                        "time_based"
+                    ]
+                },
+                "valid_time_window_end": {
+                    "description": "ValidTimeWindowEnd is the end of the time window during which the coupon is valid",
+                    "type": "string"
+                },
+                "valid_time_window_start": {
+                    "description": "ValidTimeWindowStart is the start of the time window during which the coupon is valid",
+                    "type": "string"
+                }
+            }
+        },
+        "models.DiscountDetails": {
+            "type": "object",
+            "properties": {
+                "charges_discount": {
+                    "type": "number"
+                },
+                "items_discount": {
+                    "type": "number"
+                },
+                "total_discount": {
+                    "type": "number"
+                }
+            }
+        },
+        "models.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "string"
+                },
+                "error": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.SuccessResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ValidateCouponRequest": {
+            "type": "object",
+            "required": [
+                "cart_items",
+                "coupon_code",
+                "order_total",
+                "timestamp",
+                "user_id"
+            ],
+            "properties": {
+                "cart_items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.CartItem"
+                    }
+                },
+                "coupon_code": {
+                    "type": "string"
+                },
+                "order_total": {
+                    "type": "number"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ValidateCouponResponse": {
+            "type": "object",
+            "properties": {
+                "discount": {
+                    "$ref": "#/definitions/models.DiscountDetails"
+                },
+                "is_valid": {
+                    "type": "boolean"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

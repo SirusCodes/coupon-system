@@ -1,3 +1,10 @@
+// Package main is the entry point of the coupon system server.
+//
+//	@title			Coupon System API
+//	@version		1.0
+//	@host			localhost:8080
+//	@BasePath		/
+
 package main
 
 import (
@@ -15,7 +22,11 @@ import (
 	"syscall"
 	"time"
 
+	_ "coupon-system/docs"
+
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -54,6 +65,8 @@ func main() {
 	// Setup Gin Router
 	router := gin.Default()
 
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	// Define Routes
 	adminGroup := router.Group("/admin")
 	{
@@ -73,7 +86,7 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("Server listening on port %s", cfg.ServerPort)
+		log.Printf("Server listening on http://localhost:%s", cfg.ServerPort)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("listen: %s\n", err)
 		}

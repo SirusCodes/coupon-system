@@ -8,6 +8,17 @@
     pkgs.go
     pkgs.nodejs_20
     pkgs.nodePackages.nodemon
+    pkgs.bison
+    pkgs.flex
+    pkgs.fontforge
+    pkgs.makeWrapper
+    pkgs.pkg-config
+    pkgs.gnumake
+    pkgs.gcc
+    pkgs.libiconv
+    pkgs.autoconf
+    pkgs.automake
+    pkgs.libtool 
   ];
   # Sets environment variables in the workspace
   env = {};
@@ -20,22 +31,6 @@
       onCreate = {
         # Open editors for the following files by default, if they exist:
         default.openFiles = ["server.go"];
-      };
-    };
-    # Enable previews and customize configuration
-    previews = {
-      enable = true;
-      previews = {
-        web = {
-          command = [
-            "nodemon"
-            "--signal" "SIGHUP"
-            "-w" "."
-            "-e" "go,html"
-            "-x" "go run server.go -addr localhost:$PORT"
-          ];
-          manager = "web";
-        };
       };
     };
   };
