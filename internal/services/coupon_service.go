@@ -86,58 +86,23 @@ func (s *CouponService) ValidateCoupon(ctx context.Context, req *models.Validate
 		return &models.ValidateCouponResponse{IsValid: false, Message: "Coupon not found"}, nil
 	}
 
-	// Validation checks
-	if req.Timestamp.After(coupon.ExpiryDate) {
-		return &models.ValidateCouponResponse{IsValid: false, Message: "Coupon has expired"}, nil
-	}
-	if req.OrderTotal < coupon.MinOrderValue {
-		return &models.ValidateCouponResponse{IsValid: false, Message: fmt.Sprintf("Minimum order value of %.2f required", coupon.MinOrderValue)}, nil
-	}
-	if coupon.ValidTimeWindowStart != nil && req.Timestamp.Before(*coupon.ValidTimeWindowStart) {
-		return &models.ValidateCouponResponse{IsValid: false, Message: "Coupon is not yet valid"}, nil
-	}
-	if coupon.ValidTimeWindowEnd != nil && req.Timestamp.After(*coupon.ValidTimeWindowEnd) {
-		return &models.ValidateCouponResponse{IsValid: false, Message: "Coupon is no longer valid"}, nil
+	validators := []CouponValidator{
+		NewExpiryDateValidator(),
+		NewMinOrderValueValidator(),
+		NewApplicableCategoriesValidator(),
+		NewMaxUsagePerUserValidator(s.storage),
+		NewMaxTotalUsageValidator(),
 	}
 
-	if len(coupon.ApplicableMedicineIDs) > 0 {
-		found := false
-		for _, item := range req.CartItems {
-			if slices.Contains(coupon.ApplicableMedicineIDs, item.ID) {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return &models.ValidateCouponResponse{IsValid: false, Message: "Coupon not applicable to any items in the cart"}, nil
-		}
-	}
+	for _, validator := range validators {
+		err := validator.Validate(coupon, req)
 
-	if len(coupon.ApplicableCategories) > 0 {
-		found := false
-		for _, item := range req.CartItems {
-			if slices.Contains(coupon.ApplicableCategories, item.Category) {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return &models.ValidateCouponResponse{IsValid: false, Message: "Coupon not applicable to any categories in the cart"}, nil
-		}
-	}
-
-	if coupon.MaxUsagePerUser > 0 {
-		userUsage, err := s.storage.GetUserUsageForCoupon(ctx, req.UserID, coupon.ID)
 		if err != nil {
-			return nil, fmt.Errorf("error fetching user usage: %w", err)
+			return &models.ValidateCouponResponse{
+				IsValid: false,
+				Message: err.Error(),
+			}, nil
 		}
-		if userUsage >= coupon.MaxUsagePerUser {
-			return &models.ValidateCouponResponse{IsValid: false, Message: "Maximum usage per user exceeded"}, nil
-		}
-	}
-
-	if coupon.MaxTotalUsage > 0 && coupon.CurrentTotalUsage >= coupon.MaxTotalUsage {
-		return &models.ValidateCouponResponse{IsValid: false, Message: "Maximum total usage exceeded"}, nil
 	}
 
 	// Calculate discount
@@ -199,10 +164,9 @@ func (s *CouponService) GetApplicableCoupons(ctx context.Context, req *models.Ap
 				}
 			}
 			if !found {
-				continue // Not applicable to any item in the cart
+				continue
 			}
 		}
-
 		if len(coupon.ApplicableCategories) > 0 {
 			found := false
 			for _, item := range req.CartItems {
@@ -212,7 +176,7 @@ func (s *CouponService) GetApplicableCoupons(ctx context.Context, req *models.Ap
 				}
 			}
 			if !found {
-				continue // Not applicable to any category in the cart
+				continue
 			}
 		}
 		if coupon.MaxUsagePerUser > 0 {
