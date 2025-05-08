@@ -2,7 +2,6 @@
 //
 //	@title						Coupon System API
 //	@version					1.0
-//	@host						localhost:8080
 //	@BasePath					/
 //	@securityDefinitions.apiKey	BearerAuth
 //	@in							header
@@ -27,6 +26,8 @@ import (
 	"time"
 
 	_ "coupon-system/docs"
+
+	"github.com/gin-contrib/cors"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -69,6 +70,8 @@ func main() {
 
 	// Setup Gin Router
 	router := gin.Default()
+	// Apply CORS middleware to allow all origins, headers, and methods
+	router.Use(cors.Default())
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 

@@ -193,7 +193,6 @@ definitions:
       message:
         type: string
     type: object
-host: localhost:8080
 info:
   contact: {}
   title: Coupon System API
