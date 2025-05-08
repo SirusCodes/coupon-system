@@ -1,3 +1,3 @@
 !bin/sh
 
-go tool swag init -d ./cmd/coupon_server
+go tool swag init -g cmd/coupon_server/main.go

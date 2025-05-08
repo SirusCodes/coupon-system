@@ -1,11 +1,20 @@
 {
     "swagger": "2.0",
     "info": {
-        "contact": {}
+        "title": "Coupon System API",
+        "contact": {},
+        "version": "1.0"
     },
+    "host": "localhost:8080",
+    "basePath": "/",
     "paths": {
         "/admin/coupons": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Creates a new coupon with the provided details.",
                 "consumes": [
                     "application/json"
@@ -52,6 +61,11 @@
         },
         "/coupons/applicable": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieves a list of coupons applicable to the current cart.",
                 "consumes": [
                     "application/json"
@@ -98,6 +112,11 @@
         },
         "/coupons/validate": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Validates a coupon code against the provided cart details.",
                 "consumes": [
                     "application/json"
@@ -141,9 +160,82 @@
                     }
                 }
             }
+        },
+        "/generate-tokens": {
+            "post": {
+                "description": "Generates a JSON Web Token for a given user ID and role.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Generate a JWT",
+                "parameters": [
+                    {
+                        "description": "User ID and Role",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.GenerateTokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "JWT generated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.GenerateTokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "handlers.GenerateTokenRequest": {
+            "type": "object",
+            "required": [
+                "role",
+                "user_id"
+            ],
+            "properties": {
+                "role": {
+                    "type": "string",
+                    "enum": [
+                        "admin",
+                        "user"
+                    ]
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.GenerateTokenResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
         "models.ApplicableCoupon": {
             "type": "object",
             "properties": {
@@ -378,6 +470,13 @@
                     "type": "string"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }

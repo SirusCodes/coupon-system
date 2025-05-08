@@ -25,6 +25,7 @@ func NewCouponHandlers(couponService *services.CouponService) *CouponHandlers {
 // CreateCoupon godoc
 //
 //	@Summary		Create a new coupon
+//	@Security		BearerAuth
 //	@Description	Creates a new coupon with the provided details.
 //	@Tags			coupons
 //	@Accept			json
@@ -53,6 +54,7 @@ func (h *CouponHandlers) CreateCoupon(c *gin.Context) {
 // GetApplicableCoupons godoc
 //
 //	@Summary		Get applicable coupons
+//	@Security		BearerAuth
 //	@Description	Retrieves a list of coupons applicable to the current cart.
 //	@Tags			coupons
 //	@Accept			json
@@ -82,6 +84,7 @@ func (h *CouponHandlers) GetApplicableCoupons(c *gin.Context) {
 // ValidateCoupon godoc
 //
 //	@Summary		Validate a coupon
+//	@Security		BearerAuth
 //	@Description	Validates a coupon code against the provided cart details.
 //	@Tags			coupons
 //	@Accept			json

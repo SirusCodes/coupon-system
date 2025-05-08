@@ -1,15 +1,19 @@
 // Package main is the entry point of the coupon system server.
 //
-//	@title			Coupon System API
-//	@version		1.0
-//	@host			localhost:8080
-//	@BasePath		/
+//	@title						Coupon System API
+//	@version					1.0
+//	@host						localhost:8080
+//	@BasePath					/
+//	@securityDefinitions.apiKey	BearerAuth
+//	@in							header
+//	@name						Authorization
 
 package main
 
 import (
 	"context"
 	"coupon-system/internal/api/handlers"
+	"coupon-system/internal/auth"
 	"coupon-system/internal/caching"
 	"coupon-system/internal/config"
 	"coupon-system/internal/models"
@@ -61,6 +65,7 @@ func main() {
 
 	// Initialize Handlers
 	couponHandlers := handlers.NewCouponHandlers(couponService)
+	authHandlers := handlers.NewAuthHandlers()
 
 	// Setup Gin Router
 	router := gin.Default()
@@ -75,8 +80,12 @@ func main() {
 
 	couponsGroup := router.Group("/coupons")
 	{
-		couponsGroup.GET("/applicable", couponHandlers.GetApplicableCoupons)
-		couponsGroup.POST("/validate", couponHandlers.ValidateCoupon)
+		couponsGroup.GET("/applicable", auth.AuthMiddleware(), couponHandlers.GetApplicableCoupons)
+		couponsGroup.POST("/validate", auth.AuthMiddleware(), couponHandlers.ValidateCoupon)
+	}
+
+	router.POST("/generate-tokens", authHandlers.GenerateTokenHandler)
+	{
 	}
 
 	// Start HTTP Server

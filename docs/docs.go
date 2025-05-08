@@ -17,6 +17,11 @@ const docTemplate = `{
     "paths": {
         "/admin/coupons": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Creates a new coupon with the provided details.",
                 "consumes": [
                     "application/json"
@@ -63,6 +68,11 @@ const docTemplate = `{
         },
         "/coupons/applicable": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieves a list of coupons applicable to the current cart.",
                 "consumes": [
                     "application/json"
@@ -109,6 +119,11 @@ const docTemplate = `{
         },
         "/coupons/validate": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Validates a coupon code against the provided cart details.",
                 "consumes": [
                     "application/json"
@@ -152,9 +167,82 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/generate-tokens": {
+            "post": {
+                "description": "Generates a JSON Web Token for a given user ID and role.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Generate a JWT",
+                "parameters": [
+                    {
+                        "description": "User ID and Role",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.GenerateTokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "JWT generated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.GenerateTokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "handlers.GenerateTokenRequest": {
+            "type": "object",
+            "required": [
+                "role",
+                "user_id"
+            ],
+            "properties": {
+                "role": {
+                    "type": "string",
+                    "enum": [
+                        "admin",
+                        "user"
+                    ]
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.GenerateTokenResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
         "models.ApplicableCoupon": {
             "type": "object",
             "properties": {
@@ -390,16 +478,23 @@ const docTemplate = `{
                 }
             }
         }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
-	Host:             "",
-	BasePath:         "",
+	Version:          "1.0",
+	Host:             "localhost:8080",
+	BasePath:         "/",
 	Schemes:          []string{},
-	Title:            "",
+	Title:            "Coupon System API",
 	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

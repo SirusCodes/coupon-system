@@ -1,4 +1,23 @@
+basePath: /
 definitions:
+  handlers.GenerateTokenRequest:
+    properties:
+      role:
+        enum:
+        - admin
+        - user
+        type: string
+      user_id:
+        type: string
+    required:
+    - role
+    - user_id
+    type: object
+  handlers.GenerateTokenResponse:
+    properties:
+      token:
+        type: string
+    type: object
   models.ApplicableCoupon:
     properties:
       coupon_code:
@@ -174,8 +193,11 @@ definitions:
       message:
         type: string
     type: object
+host: localhost:8080
 info:
   contact: {}
+  title: Coupon System API
+  version: "1.0"
 paths:
   /admin/coupons:
     post:
@@ -204,6 +226,8 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Create a new coupon
       tags:
       - coupons
@@ -234,6 +258,8 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Get applicable coupons
       tags:
       - coupons
@@ -264,7 +290,44 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Validate a coupon
       tags:
       - coupons
+  /generate-tokens:
+    post:
+      consumes:
+      - application/json
+      description: Generates a JSON Web Token for a given user ID and role.
+      parameters:
+      - description: User ID and Role
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.GenerateTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: JWT generated successfully
+          schema:
+            $ref: '#/definitions/handlers.GenerateTokenResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Generate a JWT
+      tags:
+      - auth
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"
