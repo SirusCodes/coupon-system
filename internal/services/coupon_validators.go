@@ -5,7 +5,6 @@ import (
 	"coupon-system/internal/models"
 	"coupon-system/internal/storage/database"
 	"fmt"
-	"slices"
 )
 
 // CouponValidator defines the interface for coupon validation rules.
@@ -65,12 +64,14 @@ func NewApplicableItemsValidator() *ApplicableItemsValidator {
 }
 
 func (v *ApplicableItemsValidator) Validate(coupon *models.Coupon, req *models.ValidateCouponRequest) error {
-	if len(coupon.ApplicableMedicineIDs) > 0 {
+	if len(coupon.MedicineIDs) > 0 {
 		found := false
-		for _, item := range req.CartItems {
-			if slices.Contains(coupon.ApplicableMedicineIDs, item.ID) {
-				found = true
-				break
+		for _, medicine := range coupon.MedicineIDs {
+			for _, item := range req.CartItems {
+				if medicine.ID == item.ID {
+					found = true
+					break
+				}
 			}
 		}
 		if !found {
@@ -88,12 +89,14 @@ func NewApplicableCategoriesValidator() *ApplicableCategoriesValidator {
 }
 
 func (v *ApplicableCategoriesValidator) Validate(coupon *models.Coupon, req *models.ValidateCouponRequest) error {
-	if len(coupon.ApplicableCategories) > 0 {
+	if len(coupon.Categories) > 0 {
 		found := false
-		for _, item := range req.CartItems {
-			if slices.Contains(coupon.ApplicableCategories, item.Category) {
-				found = true
-				break
+		for _, category := range coupon.Categories {
+            for _, item := range req.CartItems {
+                if category.ID == item.Category {
+                    found = true
+                    break
+                }
 			}
 		}
 		if !found {

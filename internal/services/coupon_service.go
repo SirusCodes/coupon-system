@@ -7,7 +7,7 @@ import (
 	"coupon-system/internal/storage/database"
 	"database/sql"
 	"fmt"
-	"slices"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -43,22 +43,27 @@ func (s *CouponService) CreateCoupon(ctx context.Context, req *models.CreateCoup
 	couponID := uuid.New().String()
 
 	coupon := &models.Coupon{
-		ID:                    couponID,
-		CouponCode:            req.CouponCode,
-		ExpiryDate:            req.ExpiryDate,
-		UsageType:             req.UsageType,
-		ApplicableMedicineIDs: req.ApplicableMedicineIDs,
-		ApplicableCategories:  req.ApplicableCategories,
-		MinOrderValue:         req.MinOrderValue,
-		ValidTimeWindowStart:  req.ValidTimeWindowStart,
-		ValidTimeWindowEnd:    req.ValidTimeWindowEnd,
-		TermsAndConditions:    req.TermsAndConditions,
-		DiscountType:          req.DiscountType,
-		DiscountValue:         req.DiscountValue,
-		MaxUsagePerUser:       req.MaxUsagePerUser,
-		MaxTotalUsage:         req.MaxTotalUsage,
-		CreatedAt:             time.Now(),
-		UpdatedAt:             time.Now(),
+		ID:                   couponID,
+		CouponCode:           req.CouponCode,
+		ExpiryDate:           req.ExpiryDate,
+		UsageType:            req.UsageType,
+		MinOrderValue:        req.MinOrderValue,
+		ValidTimeWindowStart: req.ValidTimeWindowStart,
+		ValidTimeWindowEnd:   req.ValidTimeWindowEnd,
+		TermsAndConditions:   req.TermsAndConditions,
+		DiscountType:         req.DiscountType,
+		DiscountValue:        req.DiscountValue,
+		MaxUsagePerUser:      req.MaxUsagePerUser,
+		MaxTotalUsage:        req.MaxTotalUsage,
+		CreatedAt:            time.Now(),
+		UpdatedAt:            time.Now(),
+	}
+
+	for _, id := range req.ApplicableMedicineIDs {
+		coupon.MedicineIDs = append(coupon.MedicineIDs, models.Medicine{ID: strings.TrimSpace(id)})
+	}
+	for _, category := range req.ApplicableCategories {
+		coupon.Categories = append(coupon.Categories, models.Category{ID: strings.TrimSpace(category)})
 	}
 
 	return s.storage.CreateCoupon(ctx, coupon)
@@ -153,11 +158,16 @@ func (s *CouponService) GetApplicableCoupons(ctx context.Context, req *models.Ap
 		if coupon.ValidTimeWindowEnd != nil && req.Timestamp.After(*coupon.ValidTimeWindowEnd) {
 			continue // Not within valid time window
 		}
-		if len(coupon.ApplicableMedicineIDs) > 0 {
+		if len(coupon.MedicineIDs) > 0 {
 			found := false
 			for _, item := range req.CartItems {
-				if slices.Contains(coupon.ApplicableMedicineIDs, item.ID) {
-					found = true
+				for _, medicine := range coupon.MedicineIDs {
+					if item.ID == medicine.ID {
+						found = true
+						break
+					}
+				}
+				if found {
 					break
 				}
 			}
@@ -165,11 +175,16 @@ func (s *CouponService) GetApplicableCoupons(ctx context.Context, req *models.Ap
 				continue
 			}
 		}
-		if len(coupon.ApplicableCategories) > 0 {
+		if len(coupon.Categories) > 0 {
 			found := false
 			for _, item := range req.CartItems {
-				if slices.Contains(coupon.ApplicableCategories, item.Category) {
-					found = true
+				for _, category := range coupon.Categories {
+					if item.Category == category.ID {
+						found = true
+						break
+					}
+				}
+				if found {
 					break
 				}
 			}

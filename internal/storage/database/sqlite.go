@@ -27,13 +27,64 @@ func (s *SQLiteStore) Close() error {
 
 // CreateCoupon inserts a new coupon into the database.
 func (s *SQLiteStore) CreateCoupon(ctx context.Context, coupon *models.Coupon) error {
+	tx := s.db.WithContext(ctx).Begin()
+	if tx.Error != nil {
+		return fmt.Errorf("failed to begin transaction: %w", tx.Error)
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
 
-	err := s.db.WithContext(ctx).Create(coupon).Error
+	// Ensure Medicine records exist and associate with coupon
+	for _, medicine := range coupon.MedicineIDs {
+		if err := tx.FirstOrCreate(&medicine, models.Medicine{ID: medicine.ID}).Error; err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to find or create medicine: %w", err)
+		}
+		// reload the medicine to get the full object in case it existed
+		if err := tx.First(&medicine, "id = ?", medicine.ID).Error; err != nil {
+			return fmt.Errorf("failed to find medicine after creation %w", err)
+		}
+		// Establish the many-to-many relationship
+		err := tx.Model(coupon).Association("MedicineIDs").Append(&medicine)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to associate medicine with coupon: %w", err)
+		}
+	}
 
+	// Ensure Category records exist and associate with coupon
+	for _, category := range coupon.Categories {
+		if err := tx.FirstOrCreate(&category, models.Category{ID: category.ID}).Error; err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to find or create category: %w", err)
+		}
+		// reload the category to get the full object in case it existed
+		if err := tx.First(&category, "id = ?", category.ID).Error; err != nil {
+			return fmt.Errorf("failed to find category after creation %w", err)
+		}
+		// Establish the many-to-many relationship
+		err := tx.Model(coupon).Association("Categories").Append(&category)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to associate category with coupon: %w", err)
+		}
+	}
+
+	// Create the coupon record
+	err := tx.Create(coupon).Error
 	if err != nil {
+		tx.Rollback()
 		return fmt.Errorf("failed to create coupon: %w", err)
 	}
 
+	// Commit the transaction
+	err = tx.Commit().Error
+	if err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
 	return nil
 }
 
@@ -92,20 +143,16 @@ func (s *SQLiteStore) UpdateCouponUsage(ctx context.Context, coupon *models.Coup
 	return nil
 }
 
-func (s *SQLiteStore) getCouponByIDTx(ctx context.Context, tx *gorm.DB, couponID string) (*models.Coupon, error) {
-	var coupon models.Coupon
-	err := tx.WithContext(ctx).Where("id = ?", couponID).First(&coupon).Error
-	return &coupon, err
-}
-
 // GetAllCoupons retrieves all coupons from the database.
 func (s *SQLiteStore) GetAllCoupons(ctx context.Context) ([]models.Coupon, error) {
 	var coupons []models.Coupon
-	err := s.db.WithContext(ctx).Find(&coupons).Error
+	err := s.db.WithContext(ctx).
+		Preload("MedicineIDs"). // Preload the associated MedicineIDs
+		Preload("Categories").  // Preload the associated Categories
+		Find(&coupons).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all coupons: %w", err)
 	}
-
 	return coupons, nil
 }
 
