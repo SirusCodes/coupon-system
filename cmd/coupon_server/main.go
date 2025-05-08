@@ -78,7 +78,7 @@ func main() {
 	// Define Routes
 	adminGroup := router.Group("/admin")
 	{
-		adminGroup.POST("/coupons", couponHandlers.CreateCoupon)
+		adminGroup.POST("/coupons", auth.AuthMiddleware(), auth.RoleMiddleware("admin"), couponHandlers.CreateCoupon)
 	}
 
 	couponsGroup := router.Group("/coupons")
@@ -88,8 +88,6 @@ func main() {
 	}
 
 	router.POST("/generate-tokens", authHandlers.GenerateTokenHandler)
-	{
-	}
 
 	// Start HTTP Server
 	srv := &http.Server{
