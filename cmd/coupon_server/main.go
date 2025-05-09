@@ -83,7 +83,7 @@ func main() {
 
 	couponsGroup := router.Group("/coupons")
 	{
-		couponsGroup.GET("/applicable", auth.AuthMiddleware(), couponHandlers.GetApplicableCoupons)
+		couponsGroup.POST("/applicable", auth.AuthMiddleware(), couponHandlers.GetApplicableCoupons)
 		couponsGroup.POST("/validate", auth.AuthMiddleware(), couponHandlers.ValidateCoupon)
 	}
 

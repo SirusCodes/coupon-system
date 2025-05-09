@@ -63,7 +63,7 @@ func (h *CouponHandlers) CreateCoupon(c *gin.Context) {
 //	@Success		200		{object}	models.ApplicableCouponsResponse	"List of applicable coupons"
 //	@Failure		400		{object}	models.ErrorResponse				"Bad request"
 //	@Failure		500		{object}	models.ErrorResponse				"Internal server error"
-//	@Router			/coupons/applicable [get]
+//	@Router			/coupons/applicable [post]
 func (h *CouponHandlers) GetApplicableCoupons(c *gin.Context) {
 	var req models.ApplicableCouponsRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
