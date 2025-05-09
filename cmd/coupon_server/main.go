@@ -12,7 +12,7 @@ package main
 import (
 	"context"
 	"coupon-system/internal/api/handlers"
-	"coupon-system/internal/auth"
+	"coupon-system/internal/api/middleware"
 	"coupon-system/internal/caching"
 	"coupon-system/internal/config"
 	"coupon-system/internal/models"
@@ -78,13 +78,13 @@ func main() {
 	// Define Routes
 	adminGroup := router.Group("/admin")
 	{
-		adminGroup.POST("/coupons", auth.AuthMiddleware(), auth.RoleMiddleware("admin"), couponHandlers.CreateCoupon)
+		adminGroup.POST("/coupons", middleware.AuthMiddleware(), middleware.RoleMiddleware("admin"), couponHandlers.CreateCoupon)
 	}
 
 	couponsGroup := router.Group("/coupons")
 	{
-		couponsGroup.POST("/applicable", auth.AuthMiddleware(), couponHandlers.GetApplicableCoupons)
-		couponsGroup.POST("/validate", auth.AuthMiddleware(), couponHandlers.ValidateCoupon)
+		couponsGroup.POST("/applicable", middleware.AuthMiddleware(), couponHandlers.GetApplicableCoupons)
+		couponsGroup.POST("/validate", middleware.AuthMiddleware(), couponHandlers.ValidateCoupon)
 	}
 
 	router.POST("/generate-tokens", authHandlers.GenerateTokenHandler)

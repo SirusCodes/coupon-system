@@ -1,6 +1,7 @@
-package auth
+package middleware
 
 import (
+	"coupon-system/internal/auth"
 	"net/http"
 	"strings"
 
@@ -27,7 +28,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		tokenString := parts[1]
 
-		claims, err := ParseJWT(tokenString)
+		claims, err := auth.ParseJWT(tokenString)
 		if err != nil {
 			// Check if the error is due to an expired token
 			if err == jwt.ErrSignatureInvalid {
