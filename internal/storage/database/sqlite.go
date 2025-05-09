@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"coupon-system/internal/models"
+	"errors"
 	"fmt"
 
 	"gorm.io/gorm"
@@ -93,7 +94,7 @@ func (s *SQLiteStore) GetCouponByCode(ctx context.Context, couponCode string) (*
 	var coupon models.Coupon
 	err := s.db.WithContext(ctx).Where("coupon_code = ?", couponCode).First(&coupon).Error
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil // Coupon not found is not an error in this context
 		}
 		return nil, err
@@ -161,7 +162,7 @@ func (s *SQLiteStore) GetUserUsageForCoupon(ctx context.Context, userID string, 
 	var userUsage models.UserCouponUsage
 	err := s.db.WithContext(ctx).Where("user_id = ? AND coupon_id = ?", userID, couponID).First(&userUsage).Error
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return 0, nil // No usage record found, treat as zero usage
 		}
 		return 0, fmt.Errorf("failed to get user usage for coupon: %w", err)

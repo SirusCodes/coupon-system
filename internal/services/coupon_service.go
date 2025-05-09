@@ -6,6 +6,7 @@ import (
 	"coupon-system/internal/models"
 	"coupon-system/internal/storage/database"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -80,7 +81,7 @@ func (s *CouponService) ValidateCoupon(ctx context.Context, userID string, req *
 		var err error
 		coupon, err = s.storage.GetCouponByCode(ctx, req.CouponCode)
 		if err != nil {
-			if err == sql.ErrNoRows {
+			if errors.Is(err, sql.ErrNoRows) {
 				return &models.ValidateCouponResponse{IsValid: false, Message: "Coupon not found"}, nil
 			}
 			return nil, fmt.Errorf("error fetching coupon: %w", err)
