@@ -70,7 +70,7 @@ func (s *CouponService) CreateCoupon(ctx context.Context, req *models.CreateCoup
 }
 
 // ValidateCoupon handles the validation of a coupon against a cart.
-func (s *CouponService) ValidateCoupon(ctx context.Context, req *models.ValidateCouponRequest) (*models.ValidateCouponResponse, error) {
+func (s *CouponService) ValidateCoupon(ctx context.Context, userID string, req *models.ValidateCouponRequest) (*models.ValidateCouponResponse, error) {
 	// Fetch coupon from cache, fallback to storage
 	cachedCoupon, ok := s.cache.Get(req.CouponCode)
 	var coupon *models.Coupon
@@ -95,7 +95,7 @@ func (s *CouponService) ValidateCoupon(ctx context.Context, req *models.Validate
 		NewExpiryDateValidator(),
 		NewMinOrderValueValidator(),
 		NewApplicableCategoriesValidator(),
-		NewMaxUsagePerUserValidator(s.storage),
+		NewMaxUsagePerUserValidator(s.storage, userID),
 		NewMaxTotalUsageValidator(),
 	}
 
@@ -128,7 +128,7 @@ func (s *CouponService) ValidateCoupon(ctx context.Context, req *models.Validate
 		TotalDiscount:   itemsDiscount,
 	}
 
-	err := s.storage.UpdateCouponUsage(ctx, coupon, req.UserID)
+	err := s.storage.UpdateCouponUsage(ctx, coupon, userID)
 	if err != nil {
 		return nil, fmt.Errorf("error updating coupon usage: %w", err)
 	}
@@ -137,7 +137,7 @@ func (s *CouponService) ValidateCoupon(ctx context.Context, req *models.Validate
 }
 
 // GetApplicableCoupons fetches all coupons applicable to a given cart.
-func (s *CouponService) GetApplicableCoupons(ctx context.Context, req *models.ApplicableCouponsRequest) (*models.ApplicableCouponsResponse, error) {
+func (s *CouponService) GetApplicableCoupons(ctx context.Context, userID string, req *models.ApplicableCouponsRequest) (*models.ApplicableCouponsResponse, error) {
 	coupons, err := s.storage.GetAllCoupons(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching all coupons: %w", err)
@@ -193,7 +193,9 @@ func (s *CouponService) GetApplicableCoupons(ctx context.Context, req *models.Ap
 			}
 		}
 		if coupon.MaxUsagePerUser > 0 {
-			userUsage, _ := s.storage.GetUserUsageForCoupon(ctx, req.UserID, coupon.ID)
+			userUsage, _ := s.storage.GetUserUsageForCoupon(ctx, userID, coupon.ID)
+			// We should ideally handle the error from GetUserUsageForCoupon
+			// but for this diff, we focus on passing the userID.
 			if userUsage >= coupon.MaxUsagePerUser {
 				continue // Max usage per user exceeded
 			}

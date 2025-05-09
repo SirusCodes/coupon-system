@@ -92,11 +92,11 @@ func (v *ApplicableCategoriesValidator) Validate(coupon *models.Coupon, req *mod
 	if len(coupon.Categories) > 0 {
 		found := false
 		for _, category := range coupon.Categories {
-            for _, item := range req.CartItems {
-                if category.ID == item.Category {
-                    found = true
-                    break
-                }
+			for _, item := range req.CartItems {
+				if category.ID == item.Category {
+					found = true
+					break
+				}
 			}
 		}
 		if !found {
@@ -109,15 +109,16 @@ func (v *ApplicableCategoriesValidator) Validate(coupon *models.Coupon, req *mod
 // MaxUsagePerUserValidator validates if the user has exceeded the maximum usage limit for this coupon.
 type MaxUsagePerUserValidator struct {
 	storage database.CouponStorage
+	userID  string
 }
 
-func NewMaxUsagePerUserValidator(storage database.CouponStorage) *MaxUsagePerUserValidator {
-	return &MaxUsagePerUserValidator{storage: storage}
+func NewMaxUsagePerUserValidator(storage database.CouponStorage, userID string) *MaxUsagePerUserValidator {
+	return &MaxUsagePerUserValidator{storage: storage, userID: userID}
 }
 
 func (v *MaxUsagePerUserValidator) Validate(coupon *models.Coupon, req *models.ValidateCouponRequest) error {
 	if coupon.MaxUsagePerUser > 0 {
-		userUsage, err := v.storage.GetUserUsageForCoupon(context.Background(), req.UserID, coupon.ID)
+		userUsage, err := v.storage.GetUserUsageForCoupon(context.Background(), v.userID, coupon.ID)
 		if err != nil {
 			return fmt.Errorf("error checking user usage")
 		}

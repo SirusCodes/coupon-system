@@ -71,7 +71,15 @@ func (h *CouponHandlers) GetApplicableCoupons(c *gin.Context) {
 		return
 	}
 
-	applicableCoupons, err := h.couponService.GetApplicableCoupons(c.Request.Context(), &req)
+	userID, exists := c.MustGet("userID").(string)
+	if !exists {
+		// This should not happen if the auth middleware is correctly applied
+		// but it's good practice to handle the possibility.
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "User ID not found in context"})
+		return
+	}
+
+	applicableCoupons, err := h.couponService.GetApplicableCoupons(c.Request.Context(), userID, &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "Failed to get applicable coupons", Details: err.Error()})
 		return
@@ -101,7 +109,15 @@ func (h *CouponHandlers) ValidateCoupon(c *gin.Context) {
 		return
 	}
 
-	validationResponse, err := h.couponService.ValidateCoupon(c.Request.Context(), &req)
+	userID, exists := c.MustGet("userID").(string)
+	if !exists {
+		// This should not happen if the auth middleware is correctly applied
+		// but it's good practice to handle the possibility.
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "User ID not found in context"})
+		return
+	}
+
+	validationResponse, err := h.couponService.ValidateCoupon(c.Request.Context(), userID, &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "Failed to validate coupon", Details: err.Error()})
 		return

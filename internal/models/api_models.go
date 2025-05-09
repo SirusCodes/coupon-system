@@ -53,8 +53,6 @@ type ApplicableCouponsRequest struct {
 	OrderTotal float64 `json:"order_total" binding:"required"`
 	// Timestamp is the current timestamp
 	Timestamp time.Time `json:"timestamp" binding:"required"`
-	// UserID is the ID of the user making the request
-	UserID string `json:"user_id" binding:"required"`
 }
 
 // ApplicableCoupon represents a coupon that is applicable to the current cart.
@@ -75,7 +73,6 @@ type ValidateCouponRequest struct {
 	CartItems  []CartItem `json:"cart_items" binding:"required"`
 	OrderTotal float64    `json:"order_total" binding:"required"`
 	Timestamp  time.Time  `json:"timestamp" binding:"required"`
-	UserID     string     `json:"user_id" binding:"required"`
 }
 
 // DiscountDetails represents the details of the discount applied by a coupon.
