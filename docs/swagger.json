@@ -59,7 +59,7 @@
             }
         },
         "/coupons/applicable": {
-            "get": {
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -258,8 +258,7 @@
             "required": [
                 "cart_items",
                 "order_total",
-                "timestamp",
-                "user_id"
+                "timestamp"
             ],
             "properties": {
                 "cart_items": {
@@ -275,10 +274,6 @@
                 },
                 "timestamp": {
                     "description": "Timestamp is the current timestamp",
-                    "type": "string"
-                },
-                "user_id": {
-                    "description": "UserID is the ID of the user making the request",
                     "type": "string"
                 }
             }
@@ -432,8 +427,7 @@
                 "cart_items",
                 "coupon_code",
                 "order_total",
-                "timestamp",
-                "user_id"
+                "timestamp"
             ],
             "properties": {
                 "cart_items": {
@@ -449,9 +443,6 @@
                     "type": "number"
                 },
                 "timestamp": {
-                    "type": "string"
-                },
-                "user_id": {
                     "type": "string"
                 }
             }

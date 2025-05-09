@@ -45,14 +45,10 @@ definitions:
       timestamp:
         description: Timestamp is the current timestamp
         type: string
-      user_id:
-        description: UserID is the ID of the user making the request
-        type: string
     required:
     - cart_items
     - order_total
     - timestamp
-    - user_id
     type: object
   models.ApplicableCouponsResponse:
     properties:
@@ -175,14 +171,11 @@ definitions:
         type: number
       timestamp:
         type: string
-      user_id:
-        type: string
     required:
     - cart_items
     - coupon_code
     - order_total
     - timestamp
-    - user_id
     type: object
   models.ValidateCouponResponse:
     properties:
@@ -231,7 +224,7 @@ paths:
       tags:
       - coupons
   /coupons/applicable:
-    get:
+    post:
       consumes:
       - application/json
       description: Retrieves a list of coupons applicable to the current cart.

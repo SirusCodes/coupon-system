@@ -67,7 +67,7 @@ const docTemplate = `{
             }
         },
         "/coupons/applicable": {
-            "get": {
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -266,8 +266,7 @@ const docTemplate = `{
             "required": [
                 "cart_items",
                 "order_total",
-                "timestamp",
-                "user_id"
+                "timestamp"
             ],
             "properties": {
                 "cart_items": {
@@ -283,10 +282,6 @@ const docTemplate = `{
                 },
                 "timestamp": {
                     "description": "Timestamp is the current timestamp",
-                    "type": "string"
-                },
-                "user_id": {
-                    "description": "UserID is the ID of the user making the request",
                     "type": "string"
                 }
             }
@@ -440,8 +435,7 @@ const docTemplate = `{
                 "cart_items",
                 "coupon_code",
                 "order_total",
-                "timestamp",
-                "user_id"
+                "timestamp"
             ],
             "properties": {
                 "cart_items": {
@@ -457,9 +451,6 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "timestamp": {
-                    "type": "string"
-                },
-                "user_id": {
                     "type": "string"
                 }
             }
