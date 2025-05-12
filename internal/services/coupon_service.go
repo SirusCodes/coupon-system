@@ -5,7 +5,9 @@ import (
 	"coupon-system/internal/caching"
 	"coupon-system/internal/models"
 	"coupon-system/internal/storage/database"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -15,14 +17,14 @@ import (
 )
 
 type CouponService struct {
-	storage database.CouponStorage
-	cache   caching.Cache[string, *models.Coupon]
+	storage                database.CouponStorage
+	applicableCouponsCache caching.Cache[string, *models.ApplicableCouponsResponse]
 }
 
-func NewCouponService(storage database.CouponStorage, cache caching.Cache[string, *models.Coupon]) *CouponService {
+func NewCouponService(storage database.CouponStorage, applicableCouponsCache caching.Cache[string, *models.ApplicableCouponsResponse]) *CouponService {
 	return &CouponService{
-		storage: storage,
-		cache:   cache,
+		storage:                storage,
+		applicableCouponsCache: applicableCouponsCache,
 	}
 }
 
@@ -131,6 +133,11 @@ func (s *CouponService) ValidateCoupon(ctx context.Context, userID string, req *
 
 // GetApplicableCoupons fetches all coupons applicable to a given cart.
 func (s *CouponService) GetApplicableCoupons(ctx context.Context, userID string, req *models.ApplicableCouponsRequest) (*models.ApplicableCouponsResponse, error) {
+	cacheKey := generateApplicableCouponsCacheKey(userID, req)
+	if cachedResponse, found := s.applicableCouponsCache.Get(cacheKey); found {
+		return cachedResponse, nil
+	}
+
 	coupons, err := s.storage.GetApplicableCoupons(ctx, req.Timestamp, req.OrderTotal, getMedicineIDsFromCart(req.CartItems), getCategoryIDsFromCart(req.CartItems), userID)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching all coupons: %w", err)
@@ -138,9 +145,16 @@ func (s *CouponService) GetApplicableCoupons(ctx context.Context, userID string,
 
 	var applicableCoupons []models.ApplicableCoupon
 	for _, coupon := range coupons {
-		applicableCoupons = append(applicableCoupons, models.ApplicableCoupon{CouponCode: coupon.CouponCode, DiscountValue: coupon.DiscountValue, DiscountType: coupon.DiscountType})
+		applicableCoupons = append(applicableCoupons, models.ApplicableCoupon{
+			CouponCode:    coupon.CouponCode,
+			DiscountValue: coupon.DiscountValue,
+			DiscountType:  coupon.DiscountType,
+		})
 	}
-	return &models.ApplicableCouponsResponse{ApplicableCoupons: applicableCoupons}, nil
+
+	response := &models.ApplicableCouponsResponse{ApplicableCoupons: applicableCoupons}
+	s.applicableCouponsCache.Set(cacheKey, response)
+	return response, nil
 }
 
 func getMedicineIDsFromCart(cartItems []models.CartItem) []string {
@@ -157,4 +171,15 @@ func getCategoryIDsFromCart(cartItems []models.CartItem) []string {
 		categoryIDs = append(categoryIDs, item.Category)
 	}
 	return categoryIDs
+}
+
+func generateApplicableCouponsCacheKey(userID string, req *models.ApplicableCouponsRequest) string {
+	// Use a combination of userID and the request parameters to create a unique key.
+	// Be mindful of the order of items in slices for consistent key generation.
+	// Marshalling the request can create a consistent string representation.
+	reqBytes, _ := json.Marshal(req) // Ignore error for simplicity in key generation
+	data := userID + string(reqBytes)
+
+	hash := sha256.Sum256([]byte(data))
+	return fmt.Sprintf("%x", hash)
 }

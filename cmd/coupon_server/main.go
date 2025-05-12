@@ -56,7 +56,7 @@ func main() {
 	}
 
 	// Initialize Cache
-	cache := caching.NewLRUCache[string, *models.Coupon](cfg.CacheSize, time.Duration(cfg.CacheTTLMinutes)*time.Minute)
+	cache := caching.NewLRUCache[string, *models.ApplicableCouponsResponse](cfg.CacheSize, time.Duration(cfg.CacheTTLMinutes)*time.Second)
 
 	// Initialize Storage
 	couponStorage := database.NewSQLiteStore(db)

@@ -23,8 +23,8 @@ func LoadConfig() (*Config, error) {
 		serverPort = "8080" // Default port
 	}
 
-	cacheSize := 100 // Default cache size
-	cacheTTL := 10   // Default cache TTL in minutes
+	cacheSize := 1000 // Default cache size
+	cacheTTL := 10    // Default cache TTL in seconds
 
 	return &Config{
 		DatabasePath:    dbPath,
