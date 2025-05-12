@@ -72,20 +72,12 @@ func (s *CouponService) CreateCoupon(ctx context.Context, req *models.CreateCoup
 
 // ValidateCoupon handles the validation of a coupon against a cart.
 func (s *CouponService) ValidateCoupon(ctx context.Context, userID string, req *models.ValidateCouponRequest) (*models.ValidateCouponResponse, error) {
-	// Fetch coupon from cache, fallback to storage
-	cachedCoupon, ok := s.cache.Get(req.CouponCode)
-	var coupon *models.Coupon
-	if ok {
-		coupon = cachedCoupon
-	} else {
-		var err error
-		coupon, err = s.storage.GetCouponByCode(ctx, req.CouponCode)
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return &models.ValidateCouponResponse{IsValid: false, Message: "Coupon not found"}, nil
-			}
-			return nil, fmt.Errorf("error fetching coupon: %w", err)
+	coupon, err := s.storage.GetCouponByCode(ctx, req.CouponCode)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return &models.ValidateCouponResponse{IsValid: false, Message: "Coupon not found"}, nil
 		}
+		return nil, fmt.Errorf("error fetching coupon: %w", err)
 	}
 
 	if coupon == nil {
@@ -129,7 +121,7 @@ func (s *CouponService) ValidateCoupon(ctx context.Context, userID string, req *
 		TotalDiscount:   itemsDiscount,
 	}
 
-	err := s.storage.UpdateCouponUsage(ctx, coupon, userID)
+	err = s.storage.UpdateCouponUsage(ctx, coupon, userID)
 	if err != nil {
 		return nil, fmt.Errorf("error updating coupon usage: %w", err)
 	}
@@ -139,72 +131,30 @@ func (s *CouponService) ValidateCoupon(ctx context.Context, userID string, req *
 
 // GetApplicableCoupons fetches all coupons applicable to a given cart.
 func (s *CouponService) GetApplicableCoupons(ctx context.Context, userID string, req *models.ApplicableCouponsRequest) (*models.ApplicableCouponsResponse, error) {
-	coupons, err := s.storage.GetAllCoupons(ctx)
+	coupons, err := s.storage.GetApplicableCoupons(ctx, req.Timestamp, req.OrderTotal, getMedicineIDsFromCart(req.CartItems), getCategoryIDsFromCart(req.CartItems), userID)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching all coupons: %w", err)
 	}
 
 	var applicableCoupons []models.ApplicableCoupon
 	for _, coupon := range coupons {
-		// Soft validation checks
-		if req.Timestamp.After(coupon.ExpiryDate) {
-			continue // Expired
-		}
-		if req.OrderTotal < coupon.MinOrderValue {
-			continue // Minimum order value not met
-		}
-		if coupon.ValidTimeWindowStart != nil && req.Timestamp.Before(*coupon.ValidTimeWindowStart) {
-			continue // Not within valid time window
-		}
-		if coupon.ValidTimeWindowEnd != nil && req.Timestamp.After(*coupon.ValidTimeWindowEnd) {
-			continue // Not within valid time window
-		}
-		if len(coupon.MedicineIDs) > 0 {
-			found := false
-			for _, item := range req.CartItems {
-				for _, medicine := range coupon.MedicineIDs {
-					if item.ID == medicine.ID {
-						found = true
-						break
-					}
-				}
-				if found {
-					break
-				}
-			}
-			if !found {
-				continue
-			}
-		}
-		if len(coupon.Categories) > 0 {
-			found := false
-			for _, item := range req.CartItems {
-				for _, category := range coupon.Categories {
-					if item.Category == category.ID {
-						found = true
-						break
-					}
-				}
-				if found {
-					break
-				}
-			}
-			if !found {
-				continue
-			}
-		}
-		if coupon.MaxUsagePerUser > 0 {
-			userUsage, _ := s.storage.GetUserUsageForCoupon(ctx, userID, coupon.ID)
-			// We should ideally handle the error from GetUserUsageForCoupon
-			// but for this diff, we focus on passing the userID.
-			if userUsage >= coupon.MaxUsagePerUser {
-				continue // Max usage per user exceeded
-			}
-		}
 		applicableCoupons = append(applicableCoupons, models.ApplicableCoupon{CouponCode: coupon.CouponCode, DiscountValue: coupon.DiscountValue, DiscountType: coupon.DiscountType})
-
-		// Cache the coupon
-		s.cache.Set(coupon.CouponCode, &coupon)
 	}
 	return &models.ApplicableCouponsResponse{ApplicableCoupons: applicableCoupons}, nil
+}
+
+func getMedicineIDsFromCart(cartItems []models.CartItem) []string {
+	medicineIDs := make([]string, 0, len(cartItems))
+	for _, item := range cartItems {
+		medicineIDs = append(medicineIDs, item.ID)
+	}
+	return medicineIDs
+}
+
+func getCategoryIDsFromCart(cartItems []models.CartItem) []string {
+	categoryIDs := make([]string, 0, len(cartItems))
+	for _, item := range cartItems {
+		categoryIDs = append(categoryIDs, item.Category)
+	}
+	return categoryIDs
 }
