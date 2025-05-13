@@ -50,7 +50,7 @@ func main() {
 	}
 
 	// Auto Migrate the schemas
-	err = db.AutoMigrate(&models.Coupon{}, &models.UserCouponUsage{})
+	err = db.AutoMigrate(&models.Coupon{}, &models.UserCouponUsage{}, &models.Medicine{}, &models.Category{})
 	if err != nil {
 		log.Fatalf("failed to automigrate database: %v", err)
 	}

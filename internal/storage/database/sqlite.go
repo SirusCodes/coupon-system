@@ -147,31 +147,31 @@ func (s *SQLiteStore) UpdateCouponUsage(ctx context.Context, coupon *models.Coup
 
 // GetAllCoupons retrieves all coupons from the database.
 func (s *SQLiteStore) GetApplicableCoupons(ctx context.Context, timestamp time.Time, orderTotal float64, medicineIDs []string, categoryIDs []string, userID string) ([]models.Coupon, error) {
-	var coupons []models.Coupon
-	query := s.db.WithContext(ctx).
-		Where("expiry_date > ?", timestamp).
-		Where("min_order_value <= ?", orderTotal).
-		Where("current_total_usage < max_total_usage OR max_total_usage = -1").
-		Where("(valid_time_window_start IS NULL OR valid_time_window_start <= ?)", timestamp).
-		Where("(valid_time_window_end IS NULL OR valid_time_window_end >= ?)", timestamp)
-
-	if len(medicineIDs) > 0 {
-		// Filter coupons that are associated with any of the provided medicine IDs
-		query = query.Joins("JOIN coupon_medicine_ids ON coupons.id = coupon_medicine_ids.coupon_id").
-			Where("coupon_medicine_ids.medicine_id IN (?)", medicineIDs).
-			Group("coupons.id") // Group to avoid duplicate coupons if a coupon is associated with multiple provided medicine IDs
-	}
-
-	if len(categoryIDs) > 0 {
-		// Filter coupons that are associated with any of the provided category IDs
-		query = query.Joins("JOIN coupon_categories ON coupons.id = coupon_categories.coupon_id").
-			Where("coupon_categories.category_id IN (?)", categoryIDs).
-			Group("coupons.id") // Group to avoid duplicate coupons if a coupon is associated with multiple provided category IDs
-	}
-
-	// Filter out coupons that the user has already used up to the maximum allowed limit
-	query = query.Joins("LEFT JOIN user_coupon_usages ON coupons.id = user_coupon_usages.coupon_id AND user_coupon_usages.user_id = ?", userID).
+	var coupons []models.Coupon                            // Explicitly declare coupons
+	query := s.db.WithContext(ctx).Model(&models.Coupon{}) // Start with the Coupon model
+	// Basic filtering conditions
+	query = query.
+		Where("coupons.expiry_date > ?", timestamp).
+		Where("coupons.min_order_value <= ?", orderTotal).
+		Where("coupons.current_total_usage < coupons.max_total_usage OR coupons.max_total_usage = 0").
+		Where("(coupons.valid_time_window_start IS NULL OR coupons.valid_time_window_start <= ?)", timestamp).
+		Where("(coupons.valid_time_window_end IS NULL OR coupons.valid_time_window_end >= ?)", timestamp).
+		// Filter out coupons that the user has already used up to the maximum allowed limit
+		Joins("LEFT JOIN user_coupon_usages ON coupons.id = user_coupon_usages.coupon_id AND user_coupon_usages.user_id = ?", userID).
 		Where("user_coupon_usages.times_used < coupons.max_usage_per_user OR coupons.max_usage_per_user = 0 OR user_coupon_usages.user_id IS NULL") // Include coupons the user hasn't used yet or have no per-user limit
+	// Conditional filtering based on medicine and category IDs
+	// This part implements the logic for general coupons and specific coupons
+	query = query.Where("("+
+		// Condition for general coupons
+		"NOT EXISTS (SELECT 1 FROM coupon_medicine_ids WHERE coupon_id = coupons.id) AND NOT EXISTS (SELECT 1 FROM coupon_categories WHERE coupon_id = coupons.id)"+
+		") OR ("+
+		// Condition for coupons with associated medicine or category IDs
+		"EXISTS (SELECT 1 FROM coupon_medicine_ids WHERE coupon_id = coupons.id AND medicine_id IN (?))"+
+		"OR EXISTS (SELECT 1 FROM coupon_categories WHERE coupon_id = coupons.id AND category_id IN (?))"+
+		")",
+		medicineIDs,
+		categoryIDs,
+	)
 
 	err := query.Find(&coupons).Error
 	if err != nil {
