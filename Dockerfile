@@ -1,7 +1,10 @@
 # Build
-FROM golang:1.24 AS builder
+FROM golang:alpine AS builder
 
 WORKDIR /app
+
+RUN apk add gcc
+RUN apk add musl-dev
 
 COPY go.mod .
 COPY go.sum .
@@ -9,7 +12,7 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o /app/coupon_server ./cmd/coupon_server
+RUN CGO_ENABLED=1 go build -o /app/coupon_server ./cmd/coupon_server
 
 # Run
 FROM alpine:latest
