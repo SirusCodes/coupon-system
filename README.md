@@ -9,8 +9,8 @@ This project implements a backend service for managing and applying coupons. It 
 The project follows a layered architecture:
 
 - **API Layer (`internal/api/handlers`):** Handles incoming HTTP requests, parses request bodies, and calls the appropriate service methods. It also formats service responses for HTTP output.
-- **Services Layer (`internal/services`):** Contains the core business logic. It orchestrates operations by interacting with the storage layer and applying complex validation and calculation rules.
-- **Storage Layer (`internal/storage/database`):** Abstractifies database interactions. It provides an interface for performing CRUD operations on coupon data. The current implementation uses SQLite.
+- **Services Layer (`internal/services`):** Contains the core business logic. It orchestrates operations by interacting with the data layer and applying complex validation and calculation rules.
+- **Data Layer (`internal/storage/database`):** Abstracts database interactions. It provides an interface for performing CRUD operations on coupon data. The current implementation uses SQLite.
 - **Models Layer (`internal/models`):** Defines the data structures used throughout the application for requests, responses, and database entities.
 - **Caching Layer (`internal/caching`):** Provides an interface and implementation for caching data, currently used for caching applicable coupon results.
 
@@ -21,7 +21,6 @@ The API handlers interact with the services layer, and the services layer intera
 **Prerequisites:**
 
 - Go (version 1.24 or later recommended)
-- Docker (optional, for running the database in a container)
 
 **Steps:**
 
@@ -37,10 +36,11 @@ git clone <repository_url>
 go run ./cmd/seed/main.go
 ```
 
-3. **Set JWT Secret:**
+3. **Setup Environment Secret:**
 
 ```bash
 export JWT_SECRET=<secret>
+export CGO_ENABLED=1
 ```
 
 4. **Run the project:**
@@ -67,3 +67,8 @@ The API documentation is available in Swagger format.
 ## Deployed
 
 Swagger UI - https://typical-teddy-darshandrander-52b1eff3.koyeb.app/swagger/index.html
+
+## Future implementations
+
+- Carts
+- User management
