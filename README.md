@@ -37,7 +37,13 @@ git clone <repository_url>
 go run ./cmd/seed/main.go
 ```
 
-3.  **Run the project:**
+3. **Set JWT Secret:**
+
+```bash
+export JWT_SECRET=<secret>
+```
+
+4. **Run the project:**
     
 ```bash
 go run ./cmd/coupon_server/main.go
