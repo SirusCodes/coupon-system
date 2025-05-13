@@ -64,4 +64,6 @@ The API documentation is available in Swagger format.
 - [Swagger JSON](docs/swagger.json)
 - [Swagger YAML](docs/swagger.yaml)
 
-You can view this documentation using a Swagger UI tool.
+## Deployed
+
+Swagger UI - https://typical-teddy-darshandrander-52b1eff3.koyeb.app/swagger/index.html
