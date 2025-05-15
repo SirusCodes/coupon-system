@@ -10,6 +10,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
+	"slices"
 	"strings"
 	"time"
 
@@ -106,16 +108,7 @@ func (s *CouponService) ValidateCoupon(ctx context.Context, userID string, req *
 	}
 
 	// Calculate discount
-	var itemsDiscount float64
-
-	if coupon.DiscountType == "fixed_amount" {
-		itemsDiscount = coupon.DiscountValue
-		if itemsDiscount > req.OrderTotal {
-			itemsDiscount = req.OrderTotal
-		}
-	} else if coupon.DiscountType == "percentage" {
-		itemsDiscount = req.OrderTotal * (coupon.DiscountValue / 100.0)
-	}
+	itemsDiscount := math.Min(calculateDiscount(coupon, req), req.OrderTotal)
 
 	discountDetails := &models.DiscountDetails{
 		ItemsDiscount:   itemsDiscount,
@@ -129,6 +122,44 @@ func (s *CouponService) ValidateCoupon(ctx context.Context, userID string, req *
 	}
 
 	return &models.ValidateCouponResponse{IsValid: true, Discount: discountDetails, Message: "Coupon applied successfully"}, nil
+}
+
+func calculateDiscount(coupon *models.Coupon, req *models.ValidateCouponRequest) float64 {
+	discountFor := []string{}
+
+	for _, item := range req.CartItems {
+		if slices.Contains(coupon.MedicineIDs, models.Medicine{ID: item.ID}) {
+			discountFor = append(discountFor, "medicine")
+		}
+		if slices.Contains(coupon.Categories, models.Category{ID: item.Category}) {
+			discountFor = append(discountFor, "category")
+		}
+	}
+
+	if len(discountFor) == 0 {
+		generalDiscount := NewGeneralDiscount(coupon, req.OrderTotal)
+		return generalDiscount.CalculateDiscount()
+	}
+
+	discountCalculator := []Discount{}
+
+	if slices.Contains(discountFor, "medicine") {
+		medicineDiscount := NewMedicineDiscount(coupon, req.CartItems)
+		discountCalculator = append(discountCalculator, medicineDiscount)
+	}
+
+	if slices.Contains(discountFor, "category") {
+		categoryDiscount := NewCategoryDiscount(coupon, req.CartItems)
+		discountCalculator = append(discountCalculator, categoryDiscount)
+	}
+
+	var maxDiscount float64
+
+	for _, discount := range discountCalculator {
+		maxDiscount = math.Max(maxDiscount, discount.CalculateDiscount())
+	}
+
+	return maxDiscount
 }
 
 // GetApplicableCoupons fetches all coupons applicable to a given cart.
@@ -177,7 +208,7 @@ func generateApplicableCouponsCacheKey(userID string, req *models.ApplicableCoup
 	// Use a combination of userID and the request parameters to create a unique key.
 	// Be mindful of the order of items in slices for consistent key generation.
 	// Marshalling the request can create a consistent string representation.
-	reqBytes, _ := json.Marshal(req) // Ignore error for simplicity in key generation
+	reqBytes, _ := json.Marshal(req)
 	data := userID + string(reqBytes)
 
 	hash := sha256.Sum256([]byte(data))
