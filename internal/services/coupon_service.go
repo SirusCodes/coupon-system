@@ -112,7 +112,6 @@ func (s *CouponService) ValidateCoupon(ctx context.Context, userID string, req *
 
 	discountDetails := &models.DiscountDetails{
 		ItemsDiscount:   itemsDiscount,
-		ChargesDiscount: 0,
 		TotalDiscount:   itemsDiscount,
 	}
 

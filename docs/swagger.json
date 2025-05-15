@@ -236,18 +236,16 @@
             }
         },
         "models.ApplicableCoupon": {
+            "description": "ApplicableCoupon represents a coupon that is applicable to the current cart.",
             "type": "object",
             "properties": {
                 "coupon_code": {
-                    "description": "CouponCode is the code of the coupon",
                     "type": "string"
                 },
                 "discount_type": {
-                    "description": "DiscountType is the type of discount (percentage or fixed_amount)",
                     "type": "string"
                 },
                 "discount_value": {
-                    "description": "DiscountValue is the discount value for this coupon",
                     "type": "number"
                 }
             }
@@ -262,23 +260,21 @@
             ],
             "properties": {
                 "cart_items": {
-                    "description": "CartItems is the list of items in the cart",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/models.CartItem"
                     }
                 },
                 "order_total": {
-                    "description": "OrderTotal is the total value of the order",
                     "type": "number"
                 },
                 "timestamp": {
-                    "description": "Timestamp is the current timestamp",
                     "type": "string"
                 }
             }
         },
         "models.ApplicableCouponsResponse": {
+            "description": "ApplicableCouponsResponse represents the response body for applicable coupons.",
             "type": "object",
             "properties": {
                 "applicable_coupons": {
@@ -290,6 +286,7 @@
             }
         },
         "models.CartItem": {
+            "description": "CartItem holds cart items",
             "type": "object",
             "properties": {
                 "category": {
@@ -299,11 +296,9 @@
                     "type": "string"
                 },
                 "price": {
-                    "description": "Price per unit",
                     "type": "number"
                 },
                 "quantity": {
-                    "description": "Quantity of this item in the cart",
                     "type": "integer"
                 }
             }
@@ -320,21 +315,18 @@
             ],
             "properties": {
                 "applicable_categories": {
-                    "description": "ApplicableCategories is a list of categories to which the coupon applies",
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
                 "applicable_medicine_ids": {
-                    "description": "ApplicableMedicineIDs is a list of medicine IDs to which the coupon applies",
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
                 "coupon_code": {
-                    "description": "CouponCode is the unique identifier for the coupon",
                     "type": "string"
                 },
                 "discount_type": {
@@ -346,31 +338,24 @@
                     ]
                 },
                 "discount_value": {
-                    "description": "DiscountValue is the value of the discount",
                     "type": "number"
                 },
                 "expiry_date": {
-                    "description": "ExpiryDate is the date when the coupon will expire",
                     "type": "string"
                 },
                 "max_total_usage": {
-                    "description": "MaxTotalUsage is the maximum number of times the coupon can be used in total",
                     "type": "integer"
                 },
                 "max_usage_per_user": {
-                    "description": "MaxUsagePerUser is the maximum number of times a user can use the coupon",
                     "type": "integer"
                 },
                 "min_order_value": {
-                    "description": "MinOrderValue is the minimum order value required to apply the coupon",
                     "type": "number"
                 },
                 "terms_and_conditions": {
-                    "description": "TermsAndConditions are the terms and conditions for the coupon",
                     "type": "string"
                 },
                 "usage_type": {
-                    "description": "UsageType is the type of usage allowed for the coupon (one_time, multi_use, time_based)",
                     "type": "string",
                     "enum": [
                         "one_time",
@@ -379,21 +364,17 @@
                     ]
                 },
                 "valid_time_window_end": {
-                    "description": "ValidTimeWindowEnd is the end of the time window during which the coupon is valid",
                     "type": "string"
                 },
                 "valid_time_window_start": {
-                    "description": "ValidTimeWindowStart is the start of the time window during which the coupon is valid",
                     "type": "string"
                 }
             }
         },
         "models.DiscountDetails": {
+            "description": "DiscountDetails represents the details of the discount applied by a coupon.",
             "type": "object",
             "properties": {
-                "charges_discount": {
-                    "type": "number"
-                },
                 "items_discount": {
                     "type": "number"
                 },
@@ -403,6 +384,7 @@
             }
         },
         "models.ErrorResponse": {
+            "description": "ErrorResponse represents a generic error response with an error message and details.",
             "type": "object",
             "properties": {
                 "details": {
@@ -414,6 +396,7 @@
             }
         },
         "models.SuccessResponse": {
+            "description": "SuccessResponse represents a generic success response with a message.",
             "type": "object",
             "properties": {
                 "message": {
@@ -422,6 +405,7 @@
             }
         },
         "models.ValidateCouponRequest": {
+            "description": "ValidateCouponRequest represents the request body for validating a coupon.",
             "type": "object",
             "required": [
                 "cart_items",
@@ -448,6 +432,7 @@
             }
         },
         "models.ValidateCouponResponse": {
+            "description": "ValidateCouponResponse represents the response body for validating a coupon.",
             "type": "object",
             "properties": {
                 "discount": {
