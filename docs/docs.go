@@ -250,6 +250,9 @@ const docTemplate = `{
                 "coupon_code": {
                     "type": "string"
                 },
+                "discount": {
+                    "type": "number"
+                },
                 "discount_type": {
                     "type": "string"
                 },

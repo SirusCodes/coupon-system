@@ -108,11 +108,11 @@ func (s *CouponService) ValidateCoupon(ctx context.Context, userID string, req *
 	}
 
 	// Calculate discount
-	itemsDiscount := math.Min(calculateDiscount(coupon, req), req.OrderTotal)
+	itemsDiscount := calculateDiscount(coupon, req.CartItems, req.OrderTotal)
 
 	discountDetails := &models.DiscountDetails{
-		ItemsDiscount:   itemsDiscount,
-		TotalDiscount:   itemsDiscount,
+		ItemsDiscount: itemsDiscount,
+		TotalDiscount: itemsDiscount,
 	}
 
 	err = s.storage.UpdateCouponUsage(ctx, coupon, userID)
@@ -121,44 +121,6 @@ func (s *CouponService) ValidateCoupon(ctx context.Context, userID string, req *
 	}
 
 	return &models.ValidateCouponResponse{IsValid: true, Discount: discountDetails, Message: "Coupon applied successfully"}, nil
-}
-
-func calculateDiscount(coupon *models.Coupon, req *models.ValidateCouponRequest) float64 {
-	discountFor := []string{}
-
-	for _, item := range req.CartItems {
-		if slices.Contains(coupon.MedicineIDs, models.Medicine{ID: item.ID}) {
-			discountFor = append(discountFor, "medicine")
-		}
-		if slices.Contains(coupon.Categories, models.Category{ID: item.Category}) {
-			discountFor = append(discountFor, "category")
-		}
-	}
-
-	if len(discountFor) == 0 {
-		generalDiscount := NewGeneralDiscount(coupon, req.OrderTotal)
-		return generalDiscount.CalculateDiscount()
-	}
-
-	discountCalculator := []Discount{}
-
-	if slices.Contains(discountFor, "medicine") {
-		medicineDiscount := NewMedicineDiscount(coupon, req.CartItems)
-		discountCalculator = append(discountCalculator, medicineDiscount)
-	}
-
-	if slices.Contains(discountFor, "category") {
-		categoryDiscount := NewCategoryDiscount(coupon, req.CartItems)
-		discountCalculator = append(discountCalculator, categoryDiscount)
-	}
-
-	var maxDiscount float64
-
-	for _, discount := range discountCalculator {
-		maxDiscount = math.Max(maxDiscount, discount.CalculateDiscount())
-	}
-
-	return maxDiscount
 }
 
 // GetApplicableCoupons fetches all coupons applicable to a given cart.
@@ -179,12 +141,51 @@ func (s *CouponService) GetApplicableCoupons(ctx context.Context, userID string,
 			CouponCode:    coupon.CouponCode,
 			DiscountValue: coupon.DiscountValue,
 			DiscountType:  coupon.DiscountType,
+			Discount:      calculateDiscount(&coupon, req.CartItems, req.OrderTotal),
 		})
 	}
 
 	response := &models.ApplicableCouponsResponse{ApplicableCoupons: applicableCoupons}
 	s.applicableCouponsCache.Set(cacheKey, response)
 	return response, nil
+}
+
+func calculateDiscount(coupon *models.Coupon, cartItems []models.CartItem, orderTotal float64) float64 {
+	discountFor := []string{}
+
+	for _, item := range cartItems {
+		if slices.Contains(coupon.MedicineIDs, models.Medicine{ID: item.ID}) {
+			discountFor = append(discountFor, "medicine")
+		}
+		if slices.Contains(coupon.Categories, models.Category{ID: item.Category}) {
+			discountFor = append(discountFor, "category")
+		}
+	}
+
+	if len(discountFor) == 0 {
+		generalDiscount := NewGeneralDiscount(coupon, orderTotal)
+		return generalDiscount.CalculateDiscount()
+	}
+
+	discountCalculator := []Discount{}
+
+	if slices.Contains(discountFor, "medicine") {
+		medicineDiscount := NewMedicineDiscount(coupon, cartItems)
+		discountCalculator = append(discountCalculator, medicineDiscount)
+	}
+
+	if slices.Contains(discountFor, "category") {
+		categoryDiscount := NewCategoryDiscount(coupon, cartItems)
+		discountCalculator = append(discountCalculator, categoryDiscount)
+	}
+
+	var maxDiscount float64
+
+	for _, discount := range discountCalculator {
+		maxDiscount = math.Max(maxDiscount, discount.CalculateDiscount())
+	}
+
+	return math.Max(maxDiscount, 0)
 }
 
 func getMedicineIDsFromCart(cartItems []models.CartItem) []string {

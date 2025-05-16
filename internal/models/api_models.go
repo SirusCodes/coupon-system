@@ -43,6 +43,7 @@ type ApplicableCoupon struct {
 	CouponCode    string  `json:"coupon_code"`
 	DiscountValue float64 `json:"discount_value"`
 	DiscountType  string  `json:"discount_type"`
+	Discount      float64 `json:"discount"`
 }
 
 // @Description ApplicableCouponsResponse represents the response body for applicable coupons.
